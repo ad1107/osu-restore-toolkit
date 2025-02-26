@@ -19,6 +19,7 @@
 	- Submitted a score at least once (should be a pass at any mods at any ranks)
 	- Must be in the osu! official beatmap listing, so even graveyarded maps will work.
 	- Must be logged in and online when playing.
+    	- The player (should) not being banned or removed/restricted.
 	- (For now) No custom server (devserver) supported (akatsuki, ripple,...)
 
 ## Tutorials
