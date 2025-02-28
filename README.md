@@ -9,6 +9,8 @@
 	- Getting raw data, played beatmap supposed in the "most_played" category in profile.
 	- Raw output.json shows all merged-from-paginated data from osu! database of played beatmaps, with filtered ID in the result.txt
 	- Support all gamemodes/rulesets.
+	- Detailed CSV with ALL Parsed data.
+	[Specifically: "Username", "User ID", "Beatmapset Name", "Beatmapset ID", "Beatmapset Artist", "Beatmap Creator" "Beatmap Difficulty Title", "Beatmap Difficulty ID", "Mode", "Status", "Length", "Star Rating", "Retry Count", "Download Link"]
 - download:
 	- Automatically get all ID in the file and sort by unique IDs to save download time and requests.
 	- Uses two hosters: [Beatconnect](https://beatconnect.io/) and [catboy (Mino)](https://catboy.best/) with two stages for safe downloading
@@ -32,7 +34,7 @@
 	-	Scroll down to get OAuth information and create a new one.
 	-	Pick any Application Name and let Callback URLs blank.
 	-	Register and get your very own CLIENT_ID and CLIENT_SECRET for [getID.py](https://github.com/ad1107/osu-restore-toolkit/blob/main/getID.py) file.
-- Run getID first to export all IDs in results.txt and then confirm to download by running download.py.
+- Run getID first to export all IDs in ID.txt and then confirm to download by running download.py.
 
 ## Resources and License
 - osu!APIv2 documentations https://osu.ppy.sh/docs/index.html
