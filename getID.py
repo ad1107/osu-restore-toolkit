@@ -1,11 +1,21 @@
+import os
+import re
+import csv
 import requests
 import json
+from datetime import timedelta
 
-# Replace these with your actual osu! API credentials
-CLIENT_ID = "CLIENT"
+# Replace these with your actual osu! API credentials and target user ID
+CLIENT_ID = "ID"
 CLIENT_SECRET = "SECRET"
-USER_ID = "ID"
+USER_ID = "USERID"
 API_URL = f"https://osu.ppy.sh/api/v2/users/{USER_ID}/beatmapsets/most_played"
+
+# Directories and filenames
+download_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_JSON = os.path.join(download_dir, "output.json")
+ID_TXT = os.path.join(download_dir, "ID.txt")
+CSV_FILE = os.path.join(download_dir, "Beatmaps.csv")
 
 
 def get_access_token(client_id, client_secret):
@@ -67,34 +77,135 @@ def fetch_all_data():
         all_data.extend(data)
         print(f"Fetched {len(data)} results.")
 
-        # If fewer results than 'limit' are returned, assume it's the last page
         if len(data) < limit:
             break
 
         offset += limit
 
-    # Export the raw combined JSON data to output.json
-    with open("output.json", "w") as outfile:
+    with open(OUTPUT_JSON, "w") as outfile:
         json.dump(all_data, outfile, indent=4)
-    print("\nData exported to output.json")
+    print(f"\nData exported to {OUTPUT_JSON}")
     return all_data
 
 
-def parse_and_export(input_filename, output_filename):
+def get_username(user_id, access_token):
     """
-    Parse the exported JSON data to extract desired fields and export links to 'result.txt'.
+    Fetches user data from the osu! API v2 and returns the username.
     """
+    user_url = f"https://osu.ppy.sh/api/v2/users/{user_id}"
+    response = fetch_api_data(user_url, access_token)
+    if response.status_code == 200:
+        user_data = response.json()
+        return user_data.get("username", "Unknown")
+    else:
+        print("Error fetching user data:", response.status_code, response.text)
+        return "Unknown"
 
-    # Load the JSON data from the file
-    with open(input_filename, "r") as infile:
+
+def seconds_to_mmss(seconds):
+    """
+    Convert seconds to mm:ss format.
+    """
+    try:
+        td = timedelta(seconds=int(seconds))
+        total_minutes = td.seconds // 60
+        secs = td.seconds % 60
+        return f"{total_minutes:02d}:{secs:02d}"
+    except Exception:
+        return "00:00"
+
+
+def parse_and_export():
+    """
+    Parse the exported JSON data to produce:
+      - ID.txt: unique beatmapset IDs (one per line)
+      - Beatmaps.csv: a CSV with desired fields.
+    """
+    # Load JSON data
+    with open(OUTPUT_JSON, "r") as infile:
         data = json.load(infile)
 
-    with open(output_filename, "w") as outfile:
-        for index, item in enumerate(data, start=1):
-            beatmapset_id = item.get("beatmap", {}).get("beatmapset_id", "N/A")
-            outfile.write(f"{beatmapset_id}\n")
+    # Use a set to collect unique beatmapset IDs
+    unique_ids = set()
+    # Prepare CSV rows list
+    csv_rows = []
 
-    print(f"Parsed data exported to {output_filename}")
+    # We'll fetch user username first.
+    token = get_access_token(CLIENT_ID, CLIENT_SECRET)
+    username = get_username(USER_ID, token) if token else "Unknown"
+
+    # CSV header row (with a title row)
+    header_title = f"Beatmaps Played by {username}"
+    headers = [
+        "Index",
+        "Username",
+        "User ID",
+        "Beatmapset Name",
+        "Beatmapset ID",
+        "Beatmapset Artist",
+        "Beatmap Creator",
+        "Beatmap Difficulty Title",
+        "Beatmap Difficulty ID",
+        "Mode",
+        "Status",
+        "Length",
+        "Star Rating",
+        "Retry Count",
+        "Download Link"
+    ]
+    csv_rows.append([header_title])
+    csv_rows.append(headers)
+
+    # Loop through each item in the JSON data.
+    for idx, item in enumerate(data, start=1):
+        # For unique IDs file: we take beatmapset_id from the beatmap object.
+        beatmapset_id = item.get("beatmap", {}).get("beatmapset_id", "N/A")
+        unique_ids.add(str(beatmapset_id))
+
+        # Extract other fields from the JSON.
+        beatmapset_name = item.get("beatmapset", {}).get("title", "N/A")
+        beatmapset_artist = item.get("beatmapset", {}).get("artist", "N/A")
+        beatmap_creator = item.get("beatmapset", {}).get("creator", "N/A")
+        beatmap_difficulty_title = item.get("beatmap", {}).get("version", "N/A")
+        beatmap_difficulty_id = item.get("beatmap", {}).get("id", "N/A")
+        mode = item.get("beatmap", {}).get("mode", "N/A")
+        status = item.get("beatmap", {}).get("status", "N/A")
+        total_length_sec = item.get("beatmap", {}).get("total_length", 0)
+        length_formatted = seconds_to_mmss(total_length_sec)
+        star_rating = item.get("beatmap", {}).get("difficulty_rating", "N/A")
+        retry_count = item.get("count", "N/A")
+        download_link = f"https://osu.ppy.sh/beatmapsets/{beatmapset_id}#{mode}/{beatmap_difficulty_id}"
+
+        csv_rows.append([
+            idx,
+            username,
+            USER_ID,
+            beatmapset_name,
+            beatmapset_id,
+            beatmapset_artist,
+            beatmap_creator,
+            beatmap_difficulty_title,
+            beatmap_difficulty_id,
+            mode,
+            status,
+            length_formatted,
+            star_rating,
+            retry_count,
+            download_link
+        ])
+
+    # Write unique IDs to ID.txt
+    with open(ID_TXT, "w") as idfile:
+        for uid in sorted(unique_ids):
+            idfile.write(uid + "\n")
+    print(f"Unique beatmapset IDs exported to {ID_TXT}")
+
+    # Write CSV data to Beatmaps.csv
+    with open(CSV_FILE, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        for row in csv_rows:
+            writer.writerow(row)
+    print(f"CSV exported to {CSV_FILE}")
 
 
 def main():
@@ -104,8 +215,8 @@ def main():
         print("No data fetched. Exiting.")
         return
 
-    # Step 2: Parse the exported data and create a result file
-    parse_and_export("output.json", "result.txt")
+    # Step 2: Parse and export ID.txt and Beatmaps.csv
+    parse_and_export()
 
 
 if __name__ == "__main__":
