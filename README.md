@@ -2,7 +2,7 @@
 
 **Scripts for fetching, extracting, parsing and downloading automatically for restoring played osu! beatmaps from a specified user.**
 
-![CSV Support](https://raw.githubusercontent.com/ad1107/osu-restore-toolkit/refs/heads/main/demo.jpg)
+![Full CSV Support](https://raw.githubusercontent.com/ad1107/osu-restore-toolkit/refs/heads/main/demo.jpg)
 
 # Features
 **Included in repo:**
