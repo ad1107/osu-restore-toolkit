@@ -1,3 +1,4 @@
+
 # osu!Restore Toolkit
 
 **Scripts for fetching, extracting, parsing and downloading automatically for restoring played osu! beatmaps from a specified user.**
@@ -9,10 +10,26 @@
 - getID: 
 	- osu!Bancho APIv2 connection code, with easy-to-enter Client-ID and Client-Secret - More on that in the tutorial below.
 	- Getting raw data, played beatmap supposed in the "most_played" category in profile.
-	- Raw output.json shows all merged-from-paginated data from osu! database of played beatmaps, with filtered ID in the result.txt
+	- Raw output.json shows all merged-from-paginated data from osu! database of played beatmaps, with filtered ID in the ID.txt. Feel free to use for aiding other automation tools.
 	- Support all gamemodes/rulesets.
-	- Detailed CSV with ALL Parsed data.
-	[Specifically: "Username", "User ID", "Beatmapset Name", "Beatmapset ID", "Beatmapset Artist", "Beatmap Creator" "Beatmap Difficulty Title", "Beatmap Difficulty ID", "Mode", "Status", "Length", "Star Rating", "Retry Count", "Download Link"]
+	- Detailed CSV with ALL Parsed data, Good for visualization, or analytics.
+- Fields Parsed:
+	- Index:  `Index`
+	- Username:  `username` (fetched from osu! API using `USER_ID`)
+	- User ID:  `USER_ID`
+	- Beatmapset Name:  `beatmapset.title`
+	- Beatmapset ID:  `beatmapset.id`
+	- Beatmapset Artist:  `beatmapset.artist`
+	- Beatmap Creator:  `beatmapset.creator`
+	- Beatmap Difficulty Title:  `beatmap.version`
+	- Beatmap Difficulty ID:  `beatmap.id`
+	- Mode:  `beatmap.mode`
+	- Status:  `beatmap.status`
+	- Length:  `beatmap.total_length` (converted to `mm:ss`)
+	- Star Rating:  `beatmap.difficulty_rating`
+	- Retry count:  `count`
+
+
 - download:
 	- Automatically get all ID in the file and sort by unique IDs to save download time and requests.
 	- Uses two hosters: [Beatconnect](https://beatconnect.io/) and [catboy (Mino)](https://catboy.best/) with two stages for safe downloading
