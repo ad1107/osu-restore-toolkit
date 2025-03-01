@@ -8,10 +8,9 @@ from datetime import timedelta
 # Replace these with your actual osu! API credentials and target user ID
 CLIENT_ID = "ID"
 CLIENT_SECRET = "SECRET"
-USER_ID = "USERID"
+USER_ID = "ID"
 API_URL = f"https://osu.ppy.sh/api/v2/users/{USER_ID}/beatmapsets/most_played"
 
-# Directories and filenames
 download_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_JSON = os.path.join(download_dir, "output.json")
 ID_TXT = os.path.join(download_dir, "ID.txt")
@@ -103,9 +102,6 @@ def get_username(user_id, access_token):
 
 
 def seconds_to_mmss(seconds):
-    """
-    Convert seconds to mm:ss format.
-    """
     try:
         td = timedelta(seconds=int(seconds))
         total_minutes = td.seconds // 60
@@ -121,20 +117,15 @@ def parse_and_export():
       - ID.txt: unique beatmapset IDs (one per line)
       - Beatmaps.csv: a CSV with desired fields.
     """
-    # Load JSON data
     with open(OUTPUT_JSON, "r") as infile:
         data = json.load(infile)
 
-    # Use a set to collect unique beatmapset IDs
     unique_ids = set()
-    # Prepare CSV rows list
     csv_rows = []
 
-    # We'll fetch user username first.
     token = get_access_token(CLIENT_ID, CLIENT_SECRET)
     username = get_username(USER_ID, token) if token else "Unknown"
 
-    # CSV header row (with a title row)
     header_title = f"Beatmaps Played by {username}"
     headers = [
         "Index",
@@ -156,13 +147,11 @@ def parse_and_export():
     csv_rows.append([header_title])
     csv_rows.append(headers)
 
-    # Loop through each item in the JSON data.
     for idx, item in enumerate(data, start=1):
         # For unique IDs file: we take beatmapset_id from the beatmap object.
         beatmapset_id = item.get("beatmap", {}).get("beatmapset_id", "N/A")
         unique_ids.add(str(beatmapset_id))
 
-        # Extract other fields from the JSON.
         beatmapset_name = item.get("beatmapset", {}).get("title", "N/A")
         beatmapset_artist = item.get("beatmapset", {}).get("artist", "N/A")
         beatmap_creator = item.get("beatmapset", {}).get("creator", "N/A")
@@ -194,13 +183,11 @@ def parse_and_export():
             download_link
         ])
 
-    # Write unique IDs to ID.txt
     with open(ID_TXT, "w") as idfile:
         for uid in sorted(unique_ids):
             idfile.write(uid + "\n")
     print(f"Unique beatmapset IDs exported to {ID_TXT}")
 
-    # Write CSV data to Beatmaps.csv
     with open(CSV_FILE, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         for row in csv_rows:
